@@ -40,7 +40,7 @@ class Person:
         species_url = kwargs['species']
         from swapi.swapi import Swapi  # Avoid circular import
         if species_url:
-            self.species: Species = Swapi().get_species(species_url[0])
+            self.species: Species = Swapi().get_specie(species_url[0])
         else:
             self.species: Species = None
         # self.vehicles: List[str] = kwarg['vehicles']

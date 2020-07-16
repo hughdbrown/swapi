@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from typing import List, Dict
-from functools import lru_cache
 
 import requests as r
 
@@ -11,14 +10,17 @@ BASE_URL = 'https://swapi.dev/api'
 
 
 class Swapi(object):
-    people_url = '{}/people/'.format(BASE_URL)
+    people_url: str = '{}/people/'.format(BASE_URL)
+    species_url: str = '{}/species/'.format(BASE_URL)
 
     json_headers = {'Content-Type': 'application/json'}
+
+    person_cache: Dict[str, Person] = {}
+    species_cache: Dict[str, Species] = {}
 
     def __init__(self):
         pass
 
-    @lru_cache()
     def get_persons(self) -> List[Person]:
         results: List[Dict] = []
         url = self.people_url
@@ -27,16 +29,34 @@ class Swapi(object):
             data = resp.json()
             results += data['results']
             url = data.get('next')
-        return [Person(**result) for result in results]
+        # Call get_species to pre-populate cache
+        self.get_species()
+        persons = [Person(**result) for result in results]
+        self.person_cache.update({p.url: p for p in persons})
+        return persons
 
-    @lru_cache()
     def get_person(self, url) -> Person:
-        resp = r.get(url, headers=self.json_headers)
-        data = resp.json()
-        return Person(**data)
+        if url not in self.person_cache:
+            resp = r.get(url, headers=self.json_headers)
+            data = resp.json()
+            self.person_cache[url] = Person(**data)
+        return self.person_cache[url]
 
-    @lru_cache()
-    def get_species(self, url: str) -> Species:
-        resp = r.get(url, headers=self.json_headers)
-        result = resp.json()
-        return Species(**result)
+    def get_species(self) -> List[Species]:
+        results: List[Dict] = []
+        url = self.species_url
+        while url:
+            resp = r.get(url, headers=self.json_headers)
+            data = resp.json()
+            results += data['results']
+            url = data.get('next')
+        species = [Species(**result) for result in results]
+        self.species_cache.update({s.url: s for s in species})
+        return species
+
+    def get_specie(self, url: str) -> Species:
+        if url not in self.species_cache:
+            resp = r.get(url, headers=self.json_headers)
+            result = resp.json()
+            self.species_cache[url] = Species(**result)
+        return self.species_cache[url]
