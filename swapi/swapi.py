@@ -19,13 +19,13 @@ class Swapi(object):
     species_cache: Dict[str, Species] = {}
 
     def __init__(self):
-        pass
+        self.session = r.Session()
 
     def get_persons(self) -> List[Person]:
         results: List[Dict] = []
         url = self.people_url
         while url:
-            resp = r.get(url, headers=self.json_headers)
+            resp = self.session.get(url, headers=self.json_headers)
             data = resp.json()
             results += data['results']
             url = data.get('next')
@@ -37,7 +37,7 @@ class Swapi(object):
 
     def get_person(self, url) -> Person:
         if url not in self.person_cache:
-            resp = r.get(url, headers=self.json_headers)
+            resp = self.session.get(url, headers=self.json_headers)
             data = resp.json()
             self.person_cache[url] = Person(**data)
         return self.person_cache[url]
@@ -46,7 +46,7 @@ class Swapi(object):
         results: List[Dict] = []
         url = self.species_url
         while url:
-            resp = r.get(url, headers=self.json_headers)
+            resp = self.session.get(url, headers=self.json_headers)
             data = resp.json()
             results += data['results']
             url = data.get('next')
@@ -56,7 +56,7 @@ class Swapi(object):
 
     def get_specie(self, url: str) -> Species:
         if url not in self.species_cache:
-            resp = r.get(url, headers=self.json_headers)
+            resp = self.session.get(url, headers=self.json_headers)
             result = resp.json()
             self.species_cache[url] = Species(**result)
         return self.species_cache[url]
